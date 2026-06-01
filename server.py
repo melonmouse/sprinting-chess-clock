@@ -282,6 +282,7 @@ _HTML = """\
       font-family: 'Courier New', monospace;
       overflow: hidden;
       user-select: none;
+      cursor: none;
     }
 
     .panel {
@@ -370,7 +371,7 @@ _HTML = """\
   // ---- Web Audio sound effects ----
   const _ac = new (window.AudioContext || window.webkitAudioContext)();
 
-  function _beep(freq, duration, gain = 0.25, type = 'sine') {
+  function _beep(freq, duration, gain = 1.0, type = 'sine') {
     const osc = _ac.createOscillator();
     const env = _ac.createGain();
     osc.connect(env);
@@ -385,19 +386,25 @@ _HTML = """\
 
   function soundTurnChange() {
     // Short crisp double-click
-    _beep(880, 0.06, 0.3, 'square');
-    setTimeout(() => _beep(1100, 0.07, 0.25, 'square'), 70);
+    _beep(880, 0.06, 1.0, 'square');
+    setTimeout(() => _beep(1100, 0.07, 1.0, 'square'), 70);
   }
 
-  function soundCountdown() {
-    // Soft tick
-    _beep(660, 0.05, 0.18, 'sine');
+  function soundCountdown(urgent = false) {
+    if (urgent) {
+      // High sharp double-tick for last 3 seconds
+      _beep(1320, 0.06, 1.0, 'square');
+      setTimeout(() => _beep(1760, 0.05, 1.0, 'square'), 80);
+    } else {
+      // Soft tick
+      _beep(660, 0.05, 1.0, 'sine');
+    }
   }
 
   function soundFlag() {
     // Descending buzz
-    _beep(440, 0.18, 0.4, 'sawtooth');
-    setTimeout(() => _beep(220, 0.35, 0.35, 'sawtooth'), 200);
+    _beep(440, 0.18, 1.0, 'sawtooth');
+    setTimeout(() => _beep(220, 0.35, 1.0, 'sawtooth'), 200);
   }
 
   // Ensure AudioContext is resumed on first user gesture
@@ -440,7 +447,7 @@ _HTML = """\
         : parseInt(parts[0]) * 3600 + parseInt(parts[1]) * 60 + parseInt(parts[2]);
       const prevSecs = s.active === 'WHITE' ? _prevSecsW : _prevSecsB;
       if (secsLeft <= 10 && secsLeft > 0 && secsLeft !== prevSecs) {
-        soundCountdown();
+        soundCountdown(secsLeft <= 3);
       }
       if (s.active === 'WHITE') _prevSecsW = secsLeft; else _prevSecsB = secsLeft;
     }
