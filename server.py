@@ -12,8 +12,9 @@ Example:
     http://localhost:5000/?white=600&black=600&inc_w=5&inc_b=5
 
 Keys:
-    Enter   White presses clock (also unpauses if it's White's turn, or resumes
-            and hands the clock to White if it was Black's turn when paused)
+    Enter   White presses clock (ends White's turn if running; if paused and it's
+            White's turn, unpauses and hands clock to Black; if paused and it's
+            Black's turn, unpauses and resumes Black's turn)
     Space   Black presses clock (mirror of Enter for Black)
     P       Pause / Resume
     R       Reset
@@ -218,8 +219,10 @@ def press():
                 # else: not your turn — no-op
             elif _clock._paused_clock:
                 _clock.resume()
-                if is_their_turn:
-                    # Hand the clock over to the pressing player
+                if is_your_turn:
+                    # Active player pressed their button → end their turn on unpause,
+                    # consistent with non-paused behaviour where pressing your button
+                    # always hands the clock to the opponent.
                     _clock.switch_turn()
         except RuntimeError:
             pass  # flagged or invalid state; ignore

@@ -155,9 +155,9 @@ def test_hourglass_total_time_constant_100_switches():
         clock.start()
 
     for i, duration_ms in enumerate(move_durations_ms):
-        # Every 11th move (0-indexed): simulate a pause mid-move then resume,
-        # mimicking server.py's /press logic (pressing the active player's button
-        # while paused → resume()).
+        # Every 11th move (0-indexed): simulate a pause mid-move then the active
+        # player pressing their own button to unpause, mimicking server.py's
+        # /press logic (pressing your button while paused → resume + switch_turn).
         if i % 11 == 5:
             # Pause 500 ms into the move.
             wall_ms += 500
@@ -168,22 +168,22 @@ def test_hourglass_total_time_constant_100_switches():
             assert sum(clock._remaining_ms) == total, \
                 f"committed total wrong after pause at move {i + 1}"
 
-            # Resume 1337 ms later (active player presses their button).
+            # Active player presses their button 1337 ms later → resume + switch.
             wall_ms += 1337
             with patch.object(ChessClock, '_now', return_value=at(wall_ms / 1000)):
                 clock.resume()
-
-            # Spend the remaining portion of the move duration.
-            wall_ms += duration_ms - 500
+                clock.switch_turn()
+            assert sum(clock._remaining_ms) == total, \
+                f"committed total wrong after resume+switch at move {i + 1}"
         else:
             wall_ms += duration_ms
 
-        with patch.object(ChessClock, '_now', return_value=at(wall_ms / 1000)):
-            assert sum(clock._snapshot_remaining_ms()) == total, \
-                f"snapshot wrong before switch {i + 1}"
-            clock.switch_turn()
-        assert sum(clock._remaining_ms) == total, \
-            f"committed total wrong after switch {i + 1}"
+            with patch.object(ChessClock, '_now', return_value=at(wall_ms / 1000)):
+                assert sum(clock._snapshot_remaining_ms()) == total, \
+                    f"snapshot wrong before switch {i + 1}"
+                clock.switch_turn()
+            assert sum(clock._remaining_ms) == total, \
+                f"committed total wrong after switch {i + 1}"
 
 
 def _parse_time_string(s: str) -> int:
@@ -309,6 +309,33 @@ def test_resume_raises_if_running():
 def test_pause_raises_if_not_running():
     with pytest.raises(RuntimeError):
         _make().pause()
+
+def test_press_active_player_button_while_paused_gives_turn_to_opponent():
+    """Pressing the active player's own button while paused (resume + switch_turn)
+    must hand the clock to the opponent — consistent with non-paused behavior
+    where pressing your button always ends your own turn."""
+    clock = _make()
+    with patch.object(ChessClock, '_now', return_value=T0):
+        clock.start()                   # white active
+    with patch.object(ChessClock, '_now', return_value=at(5)):
+        clock.pause()
+    with patch.object(ChessClock, '_now', return_value=at(5)):
+        clock.resume()
+        clock.switch_turn()             # white pressed their button → black now active
+    assert clock._active is Player.BLACK
+
+def test_press_inactive_player_button_while_paused_resumes_same_player():
+    """Pressing the inactive player's button while paused (resume only) must
+    resume the previously active player's turn — consistent with non-paused
+    behavior where pressing the opponent's button is a no-op."""
+    clock = _make()
+    with patch.object(ChessClock, '_now', return_value=T0):
+        clock.start()                   # white active
+    with patch.object(ChessClock, '_now', return_value=at(5)):
+        clock.pause()
+    with patch.object(ChessClock, '_now', return_value=at(5)):
+        clock.resume()                  # black pressed, but it's white's turn → white stays
+    assert clock._active is Player.WHITE
 
 
 # ---------------------------------------------------------------------------
