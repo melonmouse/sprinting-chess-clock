@@ -422,6 +422,7 @@ _HTML = """\
   let _prevSecsB   = null;
   let _wFlagged    = false;
   let _bFlagged    = false;
+  let _suppressNextTurnSound = false;  // set when sound already played eagerly on keydown
 
   function applyState(s) {
     // -- Sound: flag (time runs out) --
@@ -433,7 +434,11 @@ _HTML = """\
     // -- Sound: turn change (also fires on unpause) --
     if (s.running && lastState !== null && s.active !== 'NONE' &&
         (s.active !== _prevActive || !_prevRunning)) {
-      soundTurnChange();
+      if (_suppressNextTurnSound) {
+        _suppressNextTurnSound = false;
+      } else {
+        soundTurnChange();
+      }
     }
 
     // -- Sound: countdown beep (last 10 s, once per second) --
@@ -497,6 +502,18 @@ _HTML = """\
   document.addEventListener('keydown', async e => {
     if (!['Enter', ' ', 'p', 'P', 'r', 'R'].includes(e.key)) return;
     e.preventDefault();
+
+    // Play turn-change sound immediately — before the HTTP round-trip — to
+    // eliminate the 100–300 ms delay that would otherwise occur waiting for
+    // the POST + poll() to complete.  applyState() will swallow the echo.
+    if (lastState && lastState.running && lastState.active !== 'NONE') {
+      if ((e.key === 'Enter' && lastState.active === 'WHITE') ||
+          (e.key === ' '     && lastState.active === 'BLACK')) {
+        if (_ac.state === 'suspended') _ac.resume();
+        soundTurnChange();
+        _suppressNextTurnSound = true;
+      }
+    }
 
     if      (e.key === 'Enter')              { await post('/press?player=WHITE'); }
     else if (e.key === ' ')                  { await post('/press?player=BLACK'); }
