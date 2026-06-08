@@ -1,0 +1,15 @@
+# Chess clock game — 2026-06-06 09:38:57 UTC
+# Mode: HOURGLASS  White: 30s+0  Black: 30s+0
+# TIMESTAMP (UTC)             EVENT       PLAYER  WHITE_REMAINING  BLACK_REMAINING
+2026-06-06T09:38:57.429Z      start       WHITE          0:30.000         0:30.000
+2026-06-06T09:38:57.429Z      pause       WHITE          0:30.000         0:30.000
+2026-06-06T09:39:15.626Z      resume      WHITE          0:30.000         0:30.000
+2026-06-06T09:39:15.626Z      switch      BLACK          0:30.000         0:30.000
+2026-06-06T09:39:18.097Z      switch      WHITE          0:32.470         0:27.530
+2026-06-06T09:39:18.995Z      switch      BLACK          0:31.572         0:28.428
+2026-06-06T09:39:19.818Z      switch      WHITE          0:32.394         0:27.606
+2026-06-06T09:39:20.253Z      switch      BLACK          0:31.960         0:28.040
+2026-06-06T09:39:20.825Z      switch      WHITE          0:32.532         0:27.468
+2026-06-06T09:39:21.540Z      switch      BLACK          0:31.817         0:28.183
+2026-06-06T09:39:23.139Z      switch      WHITE          0:33.415         0:26.585
+2026-06-06T09:39:30.827Z      switch      BLACK          0:25.727         0:34.273
